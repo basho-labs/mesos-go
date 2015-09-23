@@ -1017,13 +1017,14 @@ func (driver *MesosSchedulerDriver) AcceptOffers(offerIds []*mesos.OfferID, oper
 		return driver.status, fmt.Errorf("Not connected to master.  Tasks marked as lost.")
 	}
 
+	callType := mesos.Call_ACCEPT
 	accept := &mesos.Call_Accept{
 		OfferIds:   offerIds,
 		Operations: operations,
 		Filters:    filters,
 	}
 	message := &mesos.Call{
-		Type:   &mesos.Call_ACCEPT,
+		Type:   &callType,
 		Accept: accept,
 	}
 

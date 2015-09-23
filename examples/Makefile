@@ -1,4 +1,4 @@
-BIN := scheduler executor zkdetect
+BIN := scheduler persistentscheduler executor zkdetect
 .PHONY:
 .PHONY: all $(BIN)
 

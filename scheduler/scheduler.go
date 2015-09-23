@@ -1003,6 +1003,38 @@ func (driver *MesosSchedulerDriver) abort(errMessage string) (stat mesos.Status,
 	return
 }
 
+func (driver *MesosSchedulerDriver) AcceptOffers(offerIds []*mesos.OfferID, operations []*mesos.Offer_Operation, filters *mesos.Filters) (mesos.Status, error) {
+	driver.eventLock.Lock()
+	defer driver.eventLock.Unlock()
+
+	if stat := driver.status; stat != mesos.Status_DRIVER_RUNNING {
+		return stat, fmt.Errorf("Unable to AcceptOffers, expected driver status %s, but got %s", mesos.Status_DRIVER_RUNNING, stat)
+	}
+
+	// Accept Offers
+	if !driver.connected {
+		log.Infoln("Ignoring AcceptOffers message, disconnected from master.")
+		return driver.status, fmt.Errorf("Not connected to master.  Tasks marked as lost.")
+	}
+
+	accept := &mesos.Call_Accept{
+		OfferIds:   offerIds,
+		Operations: operations,
+		Filters:    filters,
+	}
+	message := &mesos.Call{
+		Type:   &mesos.Call_ACCEPT,
+		Accept: accept,
+	}
+
+	if err := driver.send(driver.masterPid, message); err != nil {
+		log.Errorf("Failed to send LaunchTask message: %v\n", err)
+		return driver.status, err
+	}
+
+	return driver.status, nil
+}
+
 func (driver *MesosSchedulerDriver) LaunchTasks(offerIds []*mesos.OfferID, tasks []*mesos.TaskInfo, filters *mesos.Filters) (mesos.Status, error) {
 	driver.eventLock.Lock()
 	defer driver.eventLock.Unlock()
